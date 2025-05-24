@@ -84,7 +84,7 @@ const PilotMonitor: React.FC = () => {
   }, []);
 
   const handleBackToPanel = () => {
-    navigate("/pilot");
+    navigate("/pilot-panel");
   };
 
   return (
