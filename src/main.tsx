@@ -4,7 +4,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Welcome from "./pages/Welcome";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
-import Admin from "./pages/AdminPanel";
+// import Admin from "./pages/AdminPanel";
+import AdminMonitor from "./pages/AdminMonitor";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -38,7 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               path="/admin"
               element={
                 <ProtectedRoute requiredRole="police">
-                  <Admin />
+                  <AdminMonitor />
                 </ProtectedRoute>
               }
             />

@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { Icon } from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { useNavigate } from "react-router-dom";
 
 // Fix for default marker icons in Leaflet with React
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-let DefaultIcon = new Icon({
+const DefaultIcon = new Icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
-  iconAnchor: [12, 41]
+  iconAnchor: [12, 41],
 });
 
 interface DronePosition {
@@ -36,47 +36,50 @@ interface DronePosition {
 // Mock data - replace with database data later
 const mockDrones: DronePosition[] = [
   {
-    id: '1',
-    pilotName: 'Иван Петров',
+    id: "1",
+    pilotName: "Иван Петров",
     droneInfo: {
-      brand: 'DJI',
-      model: 'Mavic 3',
-      serialNumber: 'SN123456'
+      brand: "DJI",
+      model: "Mavic 3",
+      serialNumber: "SN123456",
     },
     position: {
       lat: 55.7558,
       lng: 37.6173,
-      altitude: 100
+      altitude: 100,
     },
     speed: 15,
     heading: 45,
-    violations: ['Превышение скорости']
+    violations: ["Превышение скорости"],
   },
   {
-    id: '2',
-    pilotName: 'Алексей Смирнов',
+    id: "2",
+    pilotName: "Алексей Смирнов",
     droneInfo: {
-      brand: 'Autel',
-      model: 'EVO II',
-      serialNumber: 'SN789012'
+      brand: "Autel",
+      model: "EVO II",
+      serialNumber: "SN789012",
     },
     position: {
       lat: 55.7528,
       lng: 37.6175,
-      altitude: 150
+      altitude: 150,
     },
     speed: 10,
-    heading: 90
-  }
+    heading: 90,
+  },
 ];
 
 // Component to update map view when drones move
 const MapUpdater: React.FC<{ drones: DronePosition[] }> = ({ drones }) => {
   const map = useMap();
-  
+
   useEffect(() => {
     if (drones.length > 0) {
-      const bounds = drones.map(drone => [drone.position.lat, drone.position.lng]);
+      const bounds = drones.map((drone) => [
+        drone.position.lat,
+        drone.position.lng,
+      ]);
       map.fitBounds(bounds as any);
     }
   }, [drones, map]);
@@ -87,19 +90,21 @@ const MapUpdater: React.FC<{ drones: DronePosition[] }> = ({ drones }) => {
 const AdminMonitor: React.FC = () => {
   const navigate = useNavigate();
   const [drones, setDrones] = useState<DronePosition[]>(mockDrones);
-  const [selectedDrone, setSelectedDrone] = useState<DronePosition | null>(null);
+  const [selectedDrone, setSelectedDrone] = useState<DronePosition | null>(
+    null
+  );
 
   // Simulate drone movement - replace with real data updates later
   useEffect(() => {
     const interval = setInterval(() => {
-      setDrones(currentDrones => 
-        currentDrones.map(drone => ({
+      setDrones((currentDrones) =>
+        currentDrones.map((drone) => ({
           ...drone,
           position: {
             ...drone.position,
             lat: drone.position.lat + (Math.random() - 0.5) * 0.001,
-            lng: drone.position.lng + (Math.random() - 0.5) * 0.001
-          }
+            lng: drone.position.lng + (Math.random() - 0.5) * 0.001,
+          },
         }))
       );
     }, 2000);
@@ -108,7 +113,7 @@ const AdminMonitor: React.FC = () => {
   }, []);
 
   const handleBackToPanel = () => {
-    navigate('/admin');
+    navigate("/admin");
   };
 
   return (
@@ -131,13 +136,13 @@ const AdminMonitor: React.FC = () => {
           <div className="lg:col-span-1 bg-gray-800/50 rounded-xl backdrop-blur-sm p-4">
             <h2 className="text-xl font-semibold mb-4">Активные Дроны</h2>
             <div className="space-y-4">
-              {drones.map(drone => (
+              {drones.map((drone) => (
                 <div
                   key={drone.id}
                   className={`p-4 rounded-lg cursor-pointer transition-colors ${
                     selectedDrone?.id === drone.id
-                      ? 'bg-blue-500/20 border border-blue-500'
-                      : 'bg-gray-700/50 hover:bg-gray-700/70'
+                      ? "bg-blue-500/20 border border-blue-500"
+                      : "bg-gray-700/50 hover:bg-gray-700/70"
                   }`}
                   onClick={() => setSelectedDrone(drone)}
                 >
@@ -171,13 +176,13 @@ const AdminMonitor: React.FC = () => {
               <MapContainer
                 center={[55.7558, 37.6173]}
                 zoom={13}
-                style={{ height: '100%', width: '100%' }}
+                style={{ height: "100%", width: "100%" }}
               >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
-                {drones.map(drone => (
+                {drones.map((drone) => (
                   <Marker
                     key={drone.id}
                     position={[drone.position.lat, drone.position.lng]}
@@ -186,7 +191,9 @@ const AdminMonitor: React.FC = () => {
                     <Popup>
                       <div className="text-black">
                         <h3 className="font-bold">{drone.pilotName}</h3>
-                        <p>{drone.droneInfo.brand} {drone.droneInfo.model}</p>
+                        <p>
+                          {drone.droneInfo.brand} {drone.droneInfo.model}
+                        </p>
                         <p>Высота: {drone.position.altitude} м</p>
                         <p>Скорость: {drone.speed} м/с</p>
                         <p>Курс: {drone.heading}°</p>
