@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import './index.css'
 import PilotPanel from './pages/PilotPanel'
 import AdminPanel from './pages/AdminPanel'
+import AdminMonitor from './pages/AdminMonitor'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/login" element={<Login />} />
         <Route path="/pilot" element={<PilotPanel />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin-monitor" element={<AdminMonitor />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

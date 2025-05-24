@@ -92,7 +92,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleMonitorFlights = () => {
-    navigate('/monitor-flights');
+    navigate('/admin-monitor');
   };
 
   const pendingRequests = flightRequests.filter(request => request.status === 'Ожидание');
