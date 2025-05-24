@@ -1,45 +1,65 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { register as registerApi } from "../api/auth"; // adjust path if needed
 
 const Register: React.FC = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    lastName: '',
-    firstName: '',
-    middleName: '',
-    email: '',
-    phone: '',
-    address: '',
-    password: '',
-    confirmPassword: ''
+    lastName: "",
+    firstName: "",
+    middleName: "",
+    email: "",
+    phone: "",
+    address: "",
+    password: "",
+    confirmPassword: "",
   });
 
-  const [passwordError, setPasswordError] = useState('');
+  const [passwordError, setPasswordError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Check password match when either password field changes
-    if (name === 'password' || name === 'confirmPassword') {
-      if (name === 'password' && formData.confirmPassword) {
-        setPasswordError(value !== formData.confirmPassword ? 'Пароли не совпадают' : '');
-      } else if (name === 'confirmPassword' && formData.password) {
-        setPasswordError(value !== formData.password ? 'Пароли не совпадают' : '');
+    if (name === "password" || name === "confirmPassword") {
+      if (name === "password" && formData.confirmPassword) {
+        setPasswordError(
+          value !== formData.confirmPassword ? "Пароли не совпадают" : ""
+        );
+      } else if (name === "confirmPassword" && formData.password) {
+        setPasswordError(
+          value !== formData.password ? "Пароли не совпадают" : ""
+        );
       }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      setPasswordError('Пароли не совпадают');
+      setPasswordError("Пароли не совпадают");
       return;
     }
-    // TODO: Implement registration logic
-    console.log(formData);
+
+    try {
+      const response = await registerApi({
+        full_name:
+          `${formData.firstName} ${formData.lastName} ${formData.middleName}`.trim(),
+        email: formData.email,
+        address: formData.address,
+        phone: formData.phone,
+        password: formData.password,
+        role_id: 1, // 1 = User, 2 = Admin?
+      });
+      console.log(response);
+      navigate("/login");
+    } catch (err: unknown) {
+      console.error("Registration error:", err);
+    }
   };
 
   return (
@@ -49,7 +69,7 @@ const Register: React.FC = () => {
           <h2 className="text-3xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
             Регистрация Пилота
           </h2>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -160,7 +180,7 @@ const Register: React.FC = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 bg-gray-700 border ${
-                    passwordError ? 'border-red-500' : 'border-gray-600'
+                    passwordError ? "border-red-500" : "border-gray-600"
                   } rounded-lg focus:outline-none focus:border-blue-500`}
                   required
                 />
@@ -179,7 +199,7 @@ const Register: React.FC = () => {
           </form>
 
           <p className="mt-6 text-center text-gray-400">
-            Уже есть аккаунт?{' '}
+            Уже есть аккаунт?{" "}
             <Link to="/login" className="text-blue-400 hover:text-blue-300">
               Войти
             </Link>
@@ -190,4 +210,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register; 
+export default Register;

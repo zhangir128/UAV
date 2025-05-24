@@ -1,24 +1,37 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { login as loginApi } from "../api/auth";
 
 const Login: React.FC = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement login logic
-    console.log(formData);
+    try {
+      const response = await loginApi(formData.email, formData.password);
+
+      // Save token, update context
+      console.log(response);
+      login(response.token, response.user.role_name, response.user.full_name); // role: 'police' | 'user'
+      navigate(response.user.role_name === "police" ? "/admin" : "/home");
+    } catch (err: unknown) {
+      console.error("Ошибка входа. Проверьте почту и пароль.", err);
+    }
   };
 
   return (
@@ -28,7 +41,7 @@ const Login: React.FC = () => {
           <h2 className="text-3xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
             Вход в Систему
           </h2>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -68,13 +81,19 @@ const Login: React.FC = () => {
 
           <div className="mt-6 text-center space-y-4">
             <p className="text-gray-400">
-              Нет аккаунта?{' '}
-              <Link to="/register" className="text-blue-400 hover:text-blue-300">
+              Нет аккаунта?{" "}
+              <Link
+                to="/register"
+                className="text-blue-400 hover:text-blue-300"
+              >
                 Зарегистрироваться
               </Link>
             </p>
             <p className="text-gray-400">
-              <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300">
+              <Link
+                to="/forgot-password"
+                className="text-blue-400 hover:text-blue-300"
+              >
                 Забыли пароль?
               </Link>
             </p>
