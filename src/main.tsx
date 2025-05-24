@@ -5,11 +5,14 @@ import Welcome from "./pages/Welcome";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 // import Admin from "./pages/AdminPanel";
-import AdminMonitor from "./pages/AdminMonitor";
+import AdminPanel from "./pages/AdminPanel";
+import PilotPanel from "./pages/PilotPanel";
+// import AdminMonitor from "./pages/AdminMonitor";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
+import AdminMonitor from "./pages/AdminMonitor";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -31,12 +34,20 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               path="/home"
               element={
                 <ProtectedRoute requiredRole="user">
-                  <Login />
+                  <PilotPanel />
                 </ProtectedRoute>
               }
             />
             <Route
               path="/admin"
+              element={
+                <ProtectedRoute requiredRole="police">
+                  <AdminPanel />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-monitor"
               element={
                 <ProtectedRoute requiredRole="police">
                   <AdminMonitor />

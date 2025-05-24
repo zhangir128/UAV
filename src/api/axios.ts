@@ -24,7 +24,7 @@ const auth_api = axios.create({
 
 const drone_api = axios.create({
   baseURL: import.meta.env.VITE_DRONE_URL,
-  withCredentials: true,
+  withCredentials: false,
   headers: getAuthHeaders(),
 });
 

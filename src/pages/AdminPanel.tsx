@@ -1,5 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  get_all as getFlightRequestsAPI,
+  update_request as updateRequestStatusAPI,
+} from "../api/drone";
 
 interface FlightRequest {
   id: string;
@@ -20,61 +24,93 @@ interface FlightRequest {
   violations?: string[];
 }
 
+interface RawFlightRequest {
+  id: number;
+  drone_id: number;
+  username: string;
+  altitude: number;
+  departure_time: string;
+  start_lat: number;
+  start_lng: number;
+  end_lat: number;
+  end_lng: number;
+  state: "pending" | "approved" | "rejected" | string;
+  // add other fields if needed
+}
+
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
-  const [flightRequests, setFlightRequests] = useState<FlightRequest[]>([
-    // Sample data for demonstration
-    {
-      id: "1",
-      droneId: "drone1",
-      pilotName: "Иван Петров",
-      droneInfo: {
-        brand: "DJI",
-        model: "Mavic 3",
-        serialNumber: "SN123456",
-      },
-      takeoffTime: "2024-03-20T10:00",
-      altitude: 100,
-      startNorth: 55.7558,
-      startEast: 37.6173,
-      endNorth: 55.7517,
-      endEast: 37.6178,
-      status: "Ожидание",
-    },
-    {
-      id: "2",
-      droneId: "drone2",
-      pilotName: "Алексей Смирнов",
-      droneInfo: {
-        brand: "Autel",
-        model: "EVO II",
-        serialNumber: "SN789012",
-      },
-      takeoffTime: "2024-03-20T11:00",
-      altitude: 150,
-      startNorth: 55.7528,
-      startEast: 37.6175,
-      endNorth: 55.7538,
-      endEast: 37.6185,
-      status: "Одобрено",
-      violations: ["Превышение скорости"],
-    },
-  ]);
+  const [flightRequests, setFlightRequests] = useState<FlightRequest[]>([]);
 
-  const handleApproveFlight = (requestId: string) => {
-    setFlightRequests((requests) =>
-      requests.map((request) =>
-        request.id === requestId ? { ...request, status: "Одобрено" } : request
-      )
+  // 🔽 Fetch flight requests on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getFlightRequestsAPI();
+        console.log(response);
+        setFlightRequests(
+          response.data.map((item: RawFlightRequest) => ({
+            id: item.id.toString(),
+            droneId: item.drone_id.toString(),
+            pilotName: item.username,
+            droneInfo: {
+              brand: "Unknown",
+              model: "Unknown",
+              serialNumber: "Unknown",
+            },
+            takeoffTime: item.departure_time,
+            altitude: item.altitude,
+            startNorth: item.start_lat,
+            startEast: item.start_lng,
+            endNorth: item.end_lat,
+            endEast: item.end_lng,
+            status:
+              item.state === "pending"
+                ? "Ожидание"
+                : item.state === "approved"
+                ? "Одобрено"
+                : "Отклонено",
+            violations: [],
+          }))
+        );
+      } catch (error) {
+        console.error("Ошибка при загрузке запросов:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleApproveFlight = async (requestId: string) => {
+    const response = await updateRequestStatusAPI(
+      parseInt(requestId),
+      "approved"
     );
+    if (response.success == true) {
+      setFlightRequests((requests) =>
+        requests.map((request) =>
+          request.id === requestId
+            ? { ...request, status: "Одобрено" }
+            : request
+        )
+      );
+    }
   };
 
-  const handleRejectFlight = (requestId: string) => {
-    setFlightRequests((requests) =>
-      requests.map((request) =>
-        request.id === requestId ? { ...request, status: "Отклонено" } : request
-      )
+  const handleRejectFlight = async (requestId: string) => {
+    const response = await updateRequestStatusAPI(
+      parseInt(requestId),
+      "approved"
     );
+    if (response.success == true) {
+      setFlightRequests((requests) =>
+        requests.map((request) =>
+          request.id === requestId
+            ? { ...request, status: "Отклонено" }
+            : request
+        )
+      );
+    }
   };
 
   const handleTerminateFlight = (requestId: string) => {

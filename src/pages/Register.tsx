@@ -45,8 +45,7 @@ const Register: React.FC = () => {
 
     try {
       const response = await registerApi({
-        full_name:
-          `${formData.firstName} ${formData.lastName} ${formData.middleName}`.trim(),
+        full_name: formData.name,
         email: formData.email,
         address: formData.address,
         phone: formData.phone,
