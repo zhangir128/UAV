@@ -1,17 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  create as createDroneRequestAPI,
+  activate_drone as activateDroneAPI,
   register_drone as registerDroneAPI,
+  list_drones as ListDronesAPI,
 } from "../api/drone";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
+// interface Drone {
+//   id: number;
+//   brand: string;
+//   model: string;
+//   serialNumber: string;
+//   flightStatus?: "Ожидание" | "Одобрено" | "Отклонено";
+// }
 interface Drone {
   id: number;
-  brand: string;
-  model: string;
-  serialNumber: string;
-  flightStatus?: "Ожидание" | "Одобрено" | "Отклонено";
+  battery_level: number;
+  created_at: string;
+  current_altitude: number;
+  current_lat: number;
+  current_lng: number;
+  current_status: "nullbattery" | "active" | "offline" | "stopped" | "flying";
+  max_speed: number;
+  name: string;
+  owner_id: number;
+  updated_at: string;
 }
+
+const map_flight_status = {
+  nullbattery: "Разряжено",
+  active: "Доступен",
+  offline: "Оффлайн",
+  stopped: "Остановлено",
+  flying: "В полете",
+};
 
 interface FlightRequest {
   droneId: number;
@@ -24,16 +46,17 @@ interface FlightRequest {
 }
 
 const PilotPanel: React.FC = () => {
+  const navigate = useNavigate();
   const [drones, setDrones] = useState<Drone[]>([]);
   const [showAddDroneModal, setShowAddDroneModal] = useState(false);
+  const [targetDrone, setTargetDrone] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
   const [showFlightRequestModal, setShowFlightRequestModal] = useState(false);
   const [selectedDroneId, setSelectedDroneId] = useState<number>(0);
   console.log(selectedDroneId);
   const [newDrone, setNewDrone] = useState({
-    brand: "",
-    model: "",
-    serialNumber: "",
+    name: "",
+    max_speed: 0,
   });
   const [flightRequest, setFlightRequest] = useState<FlightRequest>({
     droneId: 0,
@@ -45,23 +68,31 @@ const PilotPanel: React.FC = () => {
     endEast: 0,
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await ListDronesAPI();
+        console.log(response);
+        setDrones(response.data);
+      } catch (error) {
+        console.error("Ошибка при загрузке запросов:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   const handleAddDrone = async () => {
-    console.log("PRINt");
     setIsAdding(true);
 
     try {
-      const response = await registerDroneAPI("DJI Mini 3", 1, "8001", 25);
+      const response = await registerDroneAPI(
+        newDrone.name,
+        newDrone.max_speed
+      );
       console.log(response);
-      if (response.status == "drone registered") {
-        const newDroneWithId: Drone = {
-          id: response.drone_id,
-          brand: response.details.name,
-          model: response.details.name,
-          serialNumber: response.details.name,
-          flightStatus: "Ожидание",
-        };
-        setDrones([...drones, newDroneWithId]);
-        setNewDrone({ brand: "", model: "", serialNumber: "" });
+      if (response.success) {
+        setDrones([...drones, response.data]);
+        setNewDrone({ name: "", max_speed: 0 });
         setShowAddDroneModal(false);
       }
     } catch (error) {
@@ -72,24 +103,28 @@ const PilotPanel: React.FC = () => {
   };
 
   const handleFlightRequest = async () => {
-    const response = await createDroneRequestAPI({
-      drone_id: flightRequest.droneId,
-      departure_time: new Date(flightRequest.takeoffTime).toISOString(),
+    const response = await activateDroneAPI({
+      drone_id: targetDrone,
+      // departure_time: new Date(flightRequest.takeoffTime).toISOString(),
       altitude: flightRequest.altitude,
-      start_lat: flightRequest.startNorth,
-      start_lng: flightRequest.startEast,
-      end_lat: flightRequest.endNorth,
-      end_lng: flightRequest.endEast,
+      lat: flightRequest.startNorth,
+      lng: flightRequest.startEast,
+      // end_lat: flightRequest.endNorth,
+      // end_lng: flightRequest.endEast,
     });
     console.log(response);
-    setDrones(
-      drones.map((drone) =>
-        drone.id === flightRequest.droneId
-          ? { ...drone, flightStatus: "Ожидание" }
-          : drone
-      )
-    );
+    if (response.success) {
+      setDrones(
+        drones.map((drone) =>
+          drone.id === targetDrone
+            ? { ...drone, current_status: "active" }
+            : drone
+        )
+      );
+    }
+
     setShowFlightRequestModal(false);
+    setTargetDrone(0);
   };
 
   const handleMonitorClick = (droneId: number) => {
@@ -118,62 +153,70 @@ const PilotPanel: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4">Мои Дроны</h2>
             <div className="space-y-4">
               {drones.map((drone) => (
-                <Link to={`${drone.id}`} key={drone.id}>
-                  <div
-                    key={drone.id}
-                    className="flex items-center justify-between bg-gray-700/50 p-4 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {drone.brand} {drone.model}
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        СН: {drone.serialNumber}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {drone.flightStatus && (
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm ${
-                            drone.flightStatus === "Одобрено"
-                              ? "bg-green-500/20 text-green-400"
-                              : drone.flightStatus === "Отклонено"
-                              ? "bg-red-500/20 text-red-400"
-                              : "bg-yellow-500/20 text-yellow-400"
-                          }`}
-                        >
-                          {drone.flightStatus}
-                        </span>
-                      )}
-                      {!drone.flightStatus && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            setSelectedDroneId(drone.id);
-                            setFlightRequest({
-                              ...flightRequest,
-                              droneId: drone.id,
-                            });
-                            setShowFlightRequestModal(true);
-                          }}
-                          className="px-4 z-50 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium transition duration-300"
-                        >
-                          Запросить вылет
-                        </button>
-                      )}
-                      {drone.flightStatus === "Одобрено" && (
-                        <button
-                          onClick={() => handleMonitorClick(drone.id)}
-                          className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-sm font-medium transition duration-300"
-                        >
-                          Мониторинг
-                        </button>
-                      )}
-                    </div>
+                <div
+                  onClick={() => {
+                    if (["active", "flying"].includes(drone.current_status)) {
+                      navigate(`${drone.id}`);
+                    } else if (drone.current_status === "offline") {
+                      setShowFlightRequestModal(true);
+                      setTargetDrone(drone.id);
+                    }
+                  }}
+                  key={drone.id}
+                  className="flex items-center justify-between bg-gray-700/50 p-4 rounded-lg w-full"
+                >
+                  <div>
+                    <p className="font-medium">{drone.name}</p>
+                    <p className="text-sm text-gray-400">
+                      {drone.battery_level} %
+                    </p>
                   </div>
-                </Link>
+                  <div className="flex items-center gap-4">
+                    {drone.current_status && (
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          drone.current_status === "active" ||
+                          drone.current_status === "flying"
+                            ? "bg-green-500/20 text-green-400"
+                            : drone.current_status === "nullbattery" ||
+                              drone.current_status === "stopped"
+                            ? "bg-red-500/20 text-red-400"
+                            : "bg-yellow-500/20 text-yellow-400"
+                        }`}
+                      >
+                        {map_flight_status[drone.current_status]}
+                      </span>
+                    )}
+                    {!drone.current_status && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          setSelectedDroneId(drone.id);
+                          setFlightRequest({
+                            ...flightRequest,
+                            droneId: drone.id,
+                          });
+                          setShowFlightRequestModal(true);
+                          setTargetDrone(drone.id);
+                        }}
+                        className="px-4 z-50 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium transition duration-300"
+                      >
+                        Запросить вылет
+                      </button>
+                    )}
+                    {(drone.current_status === "active" ||
+                      drone.current_status === "flying") && (
+                      <button
+                        onClick={() => handleMonitorClick(drone.id)}
+                        className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-sm font-medium transition duration-300"
+                      >
+                        Мониторинг
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
               {drones.length === 0 && (
                 <p className="text-gray-400 text-center py-4">
@@ -193,39 +236,29 @@ const PilotPanel: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Марка
+                  Название
                 </label>
                 <input
                   type="text"
-                  value={newDrone.brand}
+                  value={newDrone.name}
                   onChange={(e) =>
-                    setNewDrone({ ...newDrone, brand: e.target.value })
+                    setNewDrone({ ...newDrone, name: e.target.value })
                   }
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Модель
+                  Максимальная скорость
                 </label>
                 <input
-                  type="text"
-                  value={newDrone.model}
+                  type="number"
+                  value={newDrone.max_speed}
                   onChange={(e) =>
-                    setNewDrone({ ...newDrone, model: e.target.value })
-                  }
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Серийный номер
-                </label>
-                <input
-                  type="text"
-                  value={newDrone.serialNumber}
-                  onChange={(e) =>
-                    setNewDrone({ ...newDrone, serialNumber: e.target.value })
+                    setNewDrone({
+                      ...newDrone,
+                      max_speed: Number(e.target.value),
+                    })
                   }
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
                 />
@@ -260,7 +293,7 @@ const PilotPanel: React.FC = () => {
           <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Запрос на Вылет</h2>
             <div className="space-y-4">
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Время вылета
                 </label>
@@ -275,7 +308,7 @@ const PilotPanel: React.FC = () => {
                   }
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
                 />
-              </div>
+              </div> */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Высота (м)
@@ -295,7 +328,7 @@ const PilotPanel: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Старт North
+                    North
                   </label>
                   <input
                     type="number"
@@ -311,7 +344,7 @@ const PilotPanel: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Старт East
+                    East
                   </label>
                   <input
                     type="number"
@@ -326,7 +359,7 @@ const PilotPanel: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Финиш North
@@ -359,10 +392,13 @@ const PilotPanel: React.FC = () => {
                     className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
                   />
                 </div>
-              </div>
+              </div> */}
               <div className="flex justify-end gap-4 mt-6">
                 <button
-                  onClick={() => setShowFlightRequestModal(false)}
+                  onClick={() => {
+                    setShowFlightRequestModal(false);
+                    setTargetDrone(0);
+                  }}
                   className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
                 >
                   Отмена

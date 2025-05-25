@@ -114,7 +114,7 @@ const PilotMonitor: React.FC = () => {
         if (!droneId) return;
 
         const [droneStatus, weather] = await Promise.all([
-          getDroneStateAPI(droneId),
+          getDroneStateAPI(parseInt(droneId)),
           fetchWeatherData(),
         ]);
         console.log(droneStatus);
@@ -219,11 +219,13 @@ const PilotMonitor: React.FC = () => {
               <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-gray-700/50">
                   <h3 className="font-medium mb-2">Позиция</h3>
-                  <div className="text-sm">
-                    <p>Широта: {droneData.latitude.toFixed(6)}°</p>
-                    <p>Долгота: {droneData.longitude.toFixed(6)}°</p>
-                    <p>Высота: {droneData.altitude} м</p>
-                  </div>
+                  {droneData && (
+                    <div className="text-sm">
+                      <p>Широта: {droneData.latitude}°</p>
+                      <p>Долгота: {droneData.longitude}°</p>
+                      <p>Высота: {droneData.altitude} м</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 rounded-lg bg-gray-700/50">

@@ -29,7 +29,7 @@ const drone_api = axios.create({
 });
 
 const drones_control_api = axios.create({
-  baseURL: import.meta.env.VITE_DRONES_CONTROL_URL,
+  baseURL: import.meta.env.VITE_MAIN_URL,
   withCredentials: false,
   headers: getAuthHeaders(),
 });
