@@ -13,6 +13,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import AdminMonitor from "./pages/AdminMonitor";
+import PilotMonitor from "./pages/PilotMonitor";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -35,6 +36,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               element={
                 <ProtectedRoute requiredRole="user">
                   <PilotPanel />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/home/:droneId"
+              element={
+                <ProtectedRoute requiredRole="user">
+                  <PilotMonitor />
                 </ProtectedRoute>
               }
             />

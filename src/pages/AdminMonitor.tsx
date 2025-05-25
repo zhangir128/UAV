@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useNavigate } from "react-router-dom";
-
+// import ViewerMap from "../components/Drone3DMap";
 // Fix for default marker icons in Leaflet with React
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -44,30 +44,30 @@ const mockDrones: DronePosition[] = [
       serialNumber: "SN123456",
     },
     position: {
-      lat: 55.7558,
-      lng: 37.6173,
+      lat: 51.1655,
+      lng: 71.4272,
       altitude: 100,
     },
     speed: 15,
     heading: 45,
     violations: ["Превышение скорости"],
   },
-  {
-    id: "2",
-    pilotName: "Алексей Смирнов",
-    droneInfo: {
-      brand: "Autel",
-      model: "EVO II",
-      serialNumber: "SN789012",
-    },
-    position: {
-      lat: 55.7528,
-      lng: 37.6175,
-      altitude: 150,
-    },
-    speed: 10,
-    heading: 90,
-  },
+  // {
+  //   id: "2",
+  //   pilotName: "Алексей Смирнов",
+  //   droneInfo: {
+  //     brand: "Autel",
+  //     model: "EVO II",
+  //     serialNumber: "SN789012",
+  //   },
+  //   position: {
+  //     lat: 55.7528,
+  //     lng: 37.6175,
+  //     altitude: 150,
+  //   },
+  //   speed: 10,
+  //   heading: 90,
+  // },
 ];
 
 // Component to update map view when drones move
@@ -171,6 +171,7 @@ const AdminMonitor: React.FC = () => {
           </div>
 
           {/* Map Container */}
+          {/* <ViewerMap /> */}
           <div className="lg:col-span-3 bg-gray-800/50 rounded-xl backdrop-blur-sm p-4">
             <div className="h-[600px] rounded-lg overflow-hidden">
               <MapContainer
