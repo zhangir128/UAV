@@ -3,6 +3,7 @@ import {
   create as createDroneRequestAPI,
   register_drone as registerDroneAPI,
 } from "../api/drone";
+import { Link } from "react-router-dom";
 interface Drone {
   id: number;
   brand: string;
@@ -50,10 +51,13 @@ const PilotPanel: React.FC = () => {
     try {
       const response = await registerDroneAPI("DJI Mini 3", 1, "8001", 25);
       console.log(response);
-      if (response.success) {
-        const newDroneWithId = {
-          ...response.data,
-          id: Math.floor(Math.random() * 100) + 1,
+      if (response.status == "drone registered") {
+        const newDroneWithId: Drone = {
+          id: response.drone_id,
+          brand: response.details.name,
+          model: response.details.name,
+          serialNumber: response.details.name,
+          flightStatus: "Ожидание",
         };
         setDrones([...drones, newDroneWithId]);
         setNewDrone({ brand: "", model: "", serialNumber: "" });
@@ -113,57 +117,62 @@ const PilotPanel: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4">Мои Дроны</h2>
             <div className="space-y-4">
               {drones.map((drone) => (
-                <div
-                  key={drone.id}
-                  className="flex items-center justify-between bg-gray-700/50 p-4 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {drone.brand} {drone.model}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      СН: {drone.serialNumber}
-                    </p>
+                <Link to={`${drone.id}`} key={drone.id}>
+                  <div
+                    key={drone.id}
+                    className="flex items-center justify-between bg-gray-700/50 p-4 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {drone.brand} {drone.model}
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        СН: {drone.serialNumber}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {drone.flightStatus && (
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            drone.flightStatus === "Одобрено"
+                              ? "bg-green-500/20 text-green-400"
+                              : drone.flightStatus === "Отклонено"
+                              ? "bg-red-500/20 text-red-400"
+                              : "bg-yellow-500/20 text-yellow-400"
+                          }`}
+                        >
+                          {drone.flightStatus}
+                        </span>
+                      )}
+                      {!drone.flightStatus && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            setSelectedDroneId(drone.id);
+                            setFlightRequest({
+                              ...flightRequest,
+                              droneId: drone.id,
+                            });
+                            setShowFlightRequestModal(true);
+                          }}
+                          className="px-4 z-50 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium transition duration-300"
+                        >
+                          Запросить вылет
+                        </button>
+                      )}
+                      {drone.flightStatus === "Одобрено" && (
+                        <button
+                          onClick={() => handleMonitorClick(drone.id)}
+                          className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-sm font-medium transition duration-300"
+                        >
+                          Мониторинг
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    {drone.flightStatus && (
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          drone.flightStatus === "Одобрено"
-                            ? "bg-green-500/20 text-green-400"
-                            : drone.flightStatus === "Отклонено"
-                            ? "bg-red-500/20 text-red-400"
-                            : "bg-yellow-500/20 text-yellow-400"
-                        }`}
-                      >
-                        {drone.flightStatus}
-                      </span>
-                    )}
-                    {!drone.flightStatus && (
-                      <button
-                        onClick={() => {
-                          setSelectedDroneId(drone.id);
-                          setFlightRequest({
-                            ...flightRequest,
-                            droneId: drone.id,
-                          });
-                          setShowFlightRequestModal(true);
-                        }}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium transition duration-300"
-                      >
-                        Запросить вылет
-                      </button>
-                    )}
-                    {drone.flightStatus === "Одобрено" && (
-                      <button
-                        onClick={() => handleMonitorClick(drone.id)}
-                        className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-sm font-medium transition duration-300"
-                      >
-                        Мониторинг
-                      </button>
-                    )}
-                  </div>
-                </div>
+                </Link>
               ))}
               {drones.length === 0 && (
                 <p className="text-gray-400 text-center py-4">

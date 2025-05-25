@@ -40,6 +40,11 @@ export const register_drone = async (
   return res.data;
 };
 
+export const drone_status = async (drone_id: string) => {
+  const res = await drones_control_api.get(`${drone_id}/status`);
+  return res.data;
+};
+
 // export const register = async (formData: {
 //   full_name: string;
 //   email: string;

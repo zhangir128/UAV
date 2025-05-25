@@ -31,25 +31,27 @@ const drone_api = axios.create({
 const drones_control_api = axios.create({
   baseURL: import.meta.env.VITE_DRONES_CONTROL_URL,
   withCredentials: false,
-  // headers: getAuthHeaders(),
+  headers: getAuthHeaders(),
 });
 
 const drone_control_api = axios.create({
   baseURL: import.meta.env.VITE_DRONE_CONTROL_URL,
   withCredentials: false,
-  // headers: getAuthHeaders(),
+  headers: getAuthHeaders(),
 });
 
 // Optional: keep interceptors if token may change after creation
-[auth_api, drone_api].forEach((instance) => {
-  instance.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    config.headers["ngrok-skip-browser-warning"] = "true";
-    return config;
-  });
-});
+[auth_api, drone_api, drones_control_api, drone_control_api].forEach(
+  (instance) => {
+    instance.interceptors.request.use((config) => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      config.headers["ngrok-skip-browser-warning"] = "true";
+      return config;
+    });
+  }
+);
 
 export { auth_api, drone_api, drones_control_api, drone_control_api };
