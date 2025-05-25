@@ -5,7 +5,11 @@ import "leaflet/dist/leaflet.css";
 import { useNavigate } from "react-router-dom";
 import { fetchWeatherData } from "../services/weatherService";
 import { useParams } from "react-router-dom";
-import { drone_status as getDroneStateAPI } from "../api/drone";
+import {
+  drone_status as getDroneStateAPI,
+  start_position as setStartLocationAPI,
+  end_position as setEndLocationAPI,
+} from "../api/drone";
 // Fix for default marker icons in Leaflet with React
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -131,24 +135,46 @@ const PilotMonitor: React.FC = () => {
   };
 
   const handleStartLocation = async () => {
-    if (startLocation.lat && startLocation.lng) {
-      setDroneData((prev) => ({
-        ...prev,
-        latitude: parseFloat(startLocation.lat),
-        longitude: parseFloat(startLocation.lng),
-      }));
+    if (startLocation.lat && startLocation.lng && droneId) {
+      const response = await setStartLocationAPI(
+        droneId,
+        parseInt(startLocation.lat),
+        parseInt(startLocation.lng),
+        10
+      );
+      if (response.status == "move command sent") {
+        setDroneData((prev) => ({
+          ...prev,
+          latitude: parseFloat(startLocation.lat),
+          longitude: parseFloat(startLocation.lng),
+        }));
+      }
     }
   };
 
-  const handleMoveTo = () => {
-    if (targetLocation.lat && targetLocation.lng && targetLocation.altitude) {
-      setDroneData((prev) => ({
-        ...prev,
+  const handleMoveTo = async () => {
+    if (
+      targetLocation.lat &&
+      targetLocation.lng &&
+      targetLocation.altitude &&
+      droneId
+    ) {
+      const response = await setEndLocationAPI(
+        droneId,
+        parseInt(targetLocation.lat),
+        parseInt(targetLocation.lng),
+        parseInt(targetLocation.altitude)
+      );
+      console.log(response);
+      if (response.status == "move command sent") {
+        setDroneData((prev) => ({
+          ...prev,
 
-        latitude: parseFloat(targetLocation.lat),
-        longitude: parseFloat(targetLocation.lng),
-        altitude: parseFloat(targetLocation.altitude),
-      }));
+          latitude: parseFloat(targetLocation.lat),
+          longitude: parseFloat(targetLocation.lng),
+          altitude: parseFloat(targetLocation.altitude),
+        }));
+      }
     }
   };
 

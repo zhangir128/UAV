@@ -1,5 +1,5 @@
 // src/api/auth.ts
-import { drone_api, drones_control_api, drone_control_api } from "./axios";
+import { drone_api, drones_control_api } from "./axios";
 
 export const create = async (formData: {
   drone_id: number;
@@ -42,6 +42,36 @@ export const register_drone = async (
 
 export const drone_status = async (drone_id: string) => {
   const res = await drones_control_api.get(`${drone_id}/status`);
+  return res.data;
+};
+
+export const start_position = async (
+  drone_id: string,
+  latitude: number,
+  longitude: number,
+  altitude: number
+) => {
+  const res = await drones_control_api.post(`${drone_id}/move`, {
+    longitude: longitude,
+    latitude: latitude,
+    altitude: altitude,
+  });
+
+  return res.data;
+};
+
+export const end_position = async (
+  drone_id: string,
+  latitude: number,
+  longitude: number,
+  altitude: number
+) => {
+  const res = await drones_control_api.post(`${drone_id}/move_to`, {
+    longitude: longitude,
+    latitude: latitude,
+    altitude: altitude,
+  });
+
   return res.data;
 };
 
