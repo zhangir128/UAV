@@ -40,8 +40,14 @@ const drone_control_api = axios.create({
   headers: getAuthHeaders(),
 });
 
+const map_api = axios.create({
+  baseURL: import.meta.env.VITE_MAP_URL,
+  withCredentials: false,
+  headers: getAuthHeaders(),
+});
+
 // Optional: keep interceptors if token may change after creation
-[auth_api, drone_api, drones_control_api, drone_control_api].forEach(
+[auth_api, drone_api, drones_control_api, drone_control_api, map_api].forEach(
   (instance) => {
     instance.interceptors.request.use((config) => {
       const token = localStorage.getItem("token");
@@ -54,4 +60,4 @@ const drone_control_api = axios.create({
   }
 );
 
-export { auth_api, drone_api, drones_control_api, drone_control_api };
+export { auth_api, drone_api, drones_control_api, drone_control_api, map_api };
