@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+  Circle,
+} from "react-leaflet";
 import { Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +17,8 @@ import {
   start_position as setStartLocationAPI,
   end_position as setEndLocationAPI,
 } from "../api/drone";
+import type { RestrictedZone } from "../api/map";
+import { get_all_zones } from "../api/map";
 // Fix for default marker icons in Leaflet with React
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -41,8 +50,8 @@ interface DroneData {
 
 // Mock data - replace with database data later
 const mockDroneData: DroneData = {
-  latitude: 55.7558,
-  longitude: 37.6173,
+  latitude: 51.1694,
+  longitude: 71.4491,
   altitude: 100,
   speed: 15,
   is_flying: true,
@@ -74,6 +83,7 @@ const PilotMonitor: React.FC = () => {
   console.log("DRON", droneId);
   const navigate = useNavigate();
   const [droneData, setDroneData] = useState<DroneData>(mockDroneData);
+  const [restrictedZones, setRestrictedZones] = useState<RestrictedZone[]>([]);
   const [startLocation, setStartLocation] = useState({ lat: "", lng: "" });
   const [targetLocation, setTargetLocation] = useState({
     lat: "",
@@ -81,28 +91,22 @@ const PilotMonitor: React.FC = () => {
     altitude: "",
   });
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const weather = await fetchWeatherData();
-  //       setDroneData((prev) => ({
-  //         ...prev,
-  //         weatherData: weather,
-  //       }));
-  //     } catch (error) {
-  //       console.error("Failed to fetch weather data:", error);
-  //     }
-  //   };
+  // Fetch restricted zones
+  useEffect(() => {
+    const fetchZones = async () => {
+      try {
+        const data = await get_all_zones();
+        setRestrictedZones(data);
+      } catch (error) {
+        console.error("Error fetching restricted zones:", error);
+      }
+    };
 
-  //   // Initial fetch
-  //   fetchData();
-
-  //   // Set up refresh interval (every 5 minutes)
-  //   const intervalId = setInterval(fetchData, 5 * 60 * 1000);
-
-  //   // Cleanup interval on component unmount
-  //   return () => clearInterval(intervalId);
-  // }, []);
+    fetchZones();
+    // Refresh zones every minute
+    const intervalId = setInterval(fetchZones, 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -264,7 +268,7 @@ const PilotMonitor: React.FC = () => {
             <div className="lg:col-span-3 bg-gray-800/50 rounded-xl backdrop-blur-sm p-4">
               <div className="h-[600px] rounded-lg overflow-hidden">
                 <MapContainer
-                  center={[droneData.latitude, droneData.longitude]}
+                  center={[51.1694, 71.4491]}
                   zoom={15}
                   style={{ height: "100%", width: "100%" }}
                 >
@@ -285,6 +289,31 @@ const PilotMonitor: React.FC = () => {
                       </div>
                     </Popup>
                   </Marker>
+                  {restrictedZones.map((zone) => (
+                    <Circle
+                      key={zone.id}
+                      center={[zone.latitude, zone.longitude]}
+                      radius={zone.radius}
+                      pathOptions={{
+                        color: "red",
+                        fillColor: "red",
+                        fillOpacity: 0.3,
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-black">
+                          <h3 className="font-bold">{zone.name}</h3>
+                          <p>Радиус: {zone.radius} м</p>
+                          <p>Высота: {zone.altitude} м</p>
+                          <p>Статус: {zone.state}</p>
+                          <p>
+                            Действует до:{" "}
+                            {new Date(zone.expires_at).toLocaleString()}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Circle>
+                  ))}
                   <MapUpdater
                     position={{
                       lat: droneData.latitude,
