@@ -12,7 +12,11 @@ import "leaflet/dist/leaflet.css";
 import { useNavigate } from "react-router-dom";
 import { fetchWeatherData } from "../services/weatherService";
 import { useParams } from "react-router-dom";
-import { drone_status as getDroneStateAPI } from "../api/drone";
+import {
+  drone_status as getDroneStateAPI,
+  start_position as setStartLocationAPI,
+  end_position as setEndLocationAPI,
+} from "../api/drone";
 import type { RestrictedZone } from "../api/map";
 import { get_all_zones } from "../api/map";
 // Fix for default marker icons in Leaflet with React
@@ -110,7 +114,7 @@ const PilotMonitor: React.FC = () => {
         if (!droneId) return;
 
         const [droneStatus, weather] = await Promise.all([
-          getDroneStateAPI(droneId),
+          getDroneStateAPI(parseInt(droneId)),
           fetchWeatherData(),
         ]);
         console.log(droneStatus);
@@ -135,24 +139,46 @@ const PilotMonitor: React.FC = () => {
   };
 
   const handleStartLocation = async () => {
-    if (startLocation.lat && startLocation.lng) {
-      setDroneData((prev) => ({
-        ...prev,
-        latitude: parseFloat(startLocation.lat),
-        longitude: parseFloat(startLocation.lng),
-      }));
+    if (startLocation.lat && startLocation.lng && droneId) {
+      const response = await setStartLocationAPI(
+        droneId,
+        parseInt(startLocation.lat),
+        parseInt(startLocation.lng),
+        10
+      );
+      if (response.status == "move command sent") {
+        setDroneData((prev) => ({
+          ...prev,
+          latitude: parseFloat(startLocation.lat),
+          longitude: parseFloat(startLocation.lng),
+        }));
+      }
     }
   };
 
-  const handleMoveTo = () => {
-    if (targetLocation.lat && targetLocation.lng && targetLocation.altitude) {
-      setDroneData((prev) => ({
-        ...prev,
+  const handleMoveTo = async () => {
+    if (
+      targetLocation.lat &&
+      targetLocation.lng &&
+      targetLocation.altitude &&
+      droneId
+    ) {
+      const response = await setEndLocationAPI(
+        droneId,
+        parseInt(targetLocation.lat),
+        parseInt(targetLocation.lng),
+        parseInt(targetLocation.altitude)
+      );
+      console.log(response);
+      if (response.status == "move command sent") {
+        setDroneData((prev) => ({
+          ...prev,
 
-        latitude: parseFloat(targetLocation.lat),
-        longitude: parseFloat(targetLocation.lng),
-        altitude: parseFloat(targetLocation.altitude),
-      }));
+          latitude: parseFloat(targetLocation.lat),
+          longitude: parseFloat(targetLocation.lng),
+          altitude: parseFloat(targetLocation.altitude),
+        }));
+      }
     }
   };
 
@@ -193,11 +219,13 @@ const PilotMonitor: React.FC = () => {
               <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-gray-700/50">
                   <h3 className="font-medium mb-2">Позиция</h3>
-                  <div className="text-sm">
-                    <p>Широта: {droneData.latitude.toFixed(6)}°</p>
-                    <p>Долгота: {droneData.longitude.toFixed(6)}°</p>
-                    <p>Высота: {droneData.altitude} м</p>
-                  </div>
+                  {droneData && (
+                    <div className="text-sm">
+                      <p>Широта: {droneData.latitude}°</p>
+                      <p>Долгота: {droneData.longitude}°</p>
+                      <p>Высота: {droneData.altitude} м</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 rounded-lg bg-gray-700/50">
