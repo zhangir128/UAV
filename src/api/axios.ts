@@ -19,13 +19,25 @@ const getAuthHeaders = () => {
 const auth_api = axios.create({
   baseURL: import.meta.env.VITE_AUTH_URL,
   withCredentials: false,
-  headers: getAuthHeaders(),
+  // headers: getAuthHeaders(),
 });
 
 const drone_api = axios.create({
   baseURL: import.meta.env.VITE_DRONE_URL,
   withCredentials: false,
   headers: getAuthHeaders(),
+});
+
+const drones_control_api = axios.create({
+  baseURL: import.meta.env.VITE_DRONES_CONTROL_URL,
+  withCredentials: false,
+  // headers: getAuthHeaders(),
+});
+
+const drone_control_api = axios.create({
+  baseURL: import.meta.env.VITE_DRONE_CONTROL_URL,
+  withCredentials: false,
+  // headers: getAuthHeaders(),
 });
 
 // Optional: keep interceptors if token may change after creation
@@ -40,4 +52,4 @@ const drone_api = axios.create({
   });
 });
 
-export { auth_api, drone_api };
+export { auth_api, drone_api, drones_control_api, drone_control_api };

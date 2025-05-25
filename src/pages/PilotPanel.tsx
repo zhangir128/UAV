@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { create as createDroneRequestAPI } from "../api/drone";
+import {
+  create as createDroneRequestAPI,
+  register_drone as registerDroneAPI,
+} from "../api/drone";
 interface Drone {
   id: number;
   brand: string;
@@ -21,6 +24,7 @@ interface FlightRequest {
 const PilotPanel: React.FC = () => {
   const [drones, setDrones] = useState<Drone[]>([]);
   const [showAddDroneModal, setShowAddDroneModal] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [showFlightRequestModal, setShowFlightRequestModal] = useState(false);
   const [selectedDroneId, setSelectedDroneId] = useState<number>(0);
   console.log(selectedDroneId);
@@ -39,14 +43,27 @@ const PilotPanel: React.FC = () => {
     endEast: 0,
   });
 
-  const handleAddDrone = () => {
-    const newDroneWithId = {
-      ...newDrone,
-      id: Math.floor(Math.random() * 100) + 1,
-    };
-    setDrones([...drones, newDroneWithId]);
-    setNewDrone({ brand: "", model: "", serialNumber: "" });
-    setShowAddDroneModal(false);
+  const handleAddDrone = async () => {
+    console.log("PRINt");
+    setIsAdding(true);
+
+    try {
+      const response = await registerDroneAPI("DJI Mini 3", 1, "8001", 25);
+      console.log(response);
+      if (response.success) {
+        const newDroneWithId = {
+          ...response.data,
+          id: Math.floor(Math.random() * 100) + 1,
+        };
+        setDrones([...drones, newDroneWithId]);
+        setNewDrone({ brand: "", model: "", serialNumber: "" });
+        setShowAddDroneModal(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    setIsAdding(false);
   };
 
   const handleFlightRequest = async () => {
@@ -211,8 +228,13 @@ const PilotPanel: React.FC = () => {
                   Отмена
                 </button>
                 <button
+                  disabled={isAdding}
                   onClick={handleAddDrone}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg"
+                  className={`px-4 py-2 rounded-lg text-white transition-colors duration-200 ${
+                    isAdding
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  }`}
                 >
                   Добавить
                 </button>
